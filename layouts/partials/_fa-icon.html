@@ -1,0 +1,67 @@
+{{- $template := "partials/_fa-icon" }}
+{{- $result := "" }}
+{{- $item := "" }}
+{{- $theme := "" }}
+{{- $class := "" }}
+{{- $href := "" }}
+{{- $title := "" }}
+{{- if reflect.IsMap . }}
+    {{- $item = .icon }}
+    {{- $theme = .theme }}
+    {{- $class = .class }}
+    {{/*  {{- warnf "themeInsideMap: %s" $theme }}  */}}
+    {{- $title = .title }}
+{{- else }}
+    {{- $item = . }}
+{{- end }}
+{{- $theme := "regular" }}
+{{- if strings.Contains $item "/" }}
+    {{- $theme = path.Dir $item }}
+    {{- $item = path.Base $item }}
+{{- end }}
+{{- $classes := "" }}
+{{- $assetRoot := "icons" }}
+{{- $fontawesomeVersion := "fontawesome-free-6.3.0-web" }}
+{{- $svgPath := "svgs" }}
+{{/*  {{- warnf "themeAfterLoop: %s" $theme }}  */}}
+{{- $file := "" }}
+{{/*  ?? Check data type ? See https://www.brijumaquio.com/get-data-type-in-hugo-framework  */}}
+{{- if eq (printf "%T" $item) "*resources.resourceAdapter" }}
+    {{- $file = $item }}
+{{- else if eq (printf "%T" $item) "string" }}
+    {{- $folder := $theme }}
+    {{/*  {{- warnf "themeToFolder: %s" $theme }}  */}}
+    {{/*  {{- warnf "folderFromTheme : %s" $folder }}  */}}
+    {{- $classes = printf "%v%v%v%v%v" $theme " fa-icon fa-icon-" $item " " $class }}
+    {{- $path := printf "%s/%s/%s/%s/%s.svg" $assetRoot $fontawesomeVersion $svgPath $folder $item }}
+    {{- warnf "%s: Looking for resource for icon %s at path '%s'" $template $item $path }}
+    {{- $file = resources.Get $path }}
+    {{- if (or (eq $file nil) (eq $file.Content nil) ) }}
+        {{- $tmpPath := first 1 (split $path "/") }}
+        {{- range $part := (split $path "/") }}
+            {{- $tmpPathGlob := printf "%s/*" $tmpPath }}
+            {{- warnf "    Resources at '%s': \n    %#v" $tmpPathGlob (first 3 (resources.Match $tmpPathGlob) ) }}
+            {{- $tmpPath = delimit (slice $tmpPath $part) "/" }}
+        {{- end }}
+        {{- errorf "%s: Icon '%s' in theme '%s' not found: path='%s' returned resource='%s'" $template $item $theme $path $file }}
+        {{- return }}
+    {{- end }}
+{{- else }}
+    {{/*  Get the filename, remove extension, add custom classes  */}}
+    {{- $classes = print (replace (path.Base $item) ".svg" "" | anchorize) " fa-icon " }}
+    {{- $file = resources.Get $item }}
+{{- end }}
+{{- if (or (eq $file nil) (eq $file.Content nil) ) }}
+    {{- errorf "%s: Icon '%s' in theme '%s' not found: resource='%s'" $template $item $theme $file }}
+{{- else }}
+    {{- $content := replaceRE "<!--[\\s\\S]*-->" "" $file.Content -}}
+    {{- $pattern := `[\s\S]*?<svg([\s\S]*)?>([\s\S]*)(<title>[\s\S]*</title>)?([\s\S]*)</svg>([\s\S]*)?` }}
+    {{- $replaceWith := "" }}
+    {{- with $title }}
+        {{- $replaceWith = printf `<svg aria-hidden="true" class="%s" ${1}>${2}<title>%s</title>${4}</svg>` $classes . }}
+    {{- else }}
+        {{- $replaceWith = printf `<svg aria-hidden="true" class="%s" ${1}>${2}${3}${4}</svg>` $classes }}
+    {{- end }}
+    {{- $result = ($content | replaceRE $pattern $replaceWith | safeHTML) -}}
+{{- end }}
+{{- return $result }}
