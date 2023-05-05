@@ -32,15 +32,15 @@
     {{- $folder := $theme }}
     {{/*  {{- warnf "themeToFolder: %s" $theme }}  */}}
     {{/*  {{- warnf "folderFromTheme : %s" $folder }}  */}}
-    {{- $classes = printf "%v%v%v%v%v" $theme " fa-icon fa-icon-" $item " " $class }}
+    {{- $classes = printf "%v%v%v%v%v" $theme " icon fa-icon fa-icon-" $item " " $class }}
     {{- $path := printf "%s/%s/%s/%s/%s.svg" $assetRoot $fontawesomeVersion $svgPath $folder $item }}
-    {{- warnf "%s: Looking for resource for icon %s at path '%s'" $template $item $path }}
+    {{/* {{- warnf "%s: Looking for resource for icon %s at path '%s'" $template $item $path }} */}}
     {{- $file = resources.Get $path }}
     {{- if (or (eq $file nil) (eq $file.Content nil) ) }}
         {{- $tmpPath := first 1 (split $path "/") }}
         {{- range $part := (split $path "/") }}
             {{- $tmpPathGlob := printf "%s/*" $tmpPath }}
-            {{- warnf "    Resources at '%s': \n    %#v" $tmpPathGlob (first 3 (resources.Match $tmpPathGlob) ) }}
+            {{/* {{- warnf "    Resources at '%s': \n    %#v" $tmpPathGlob (first 3 (resources.Match $tmpPathGlob) ) }} */}}
             {{- $tmpPath = delimit (slice $tmpPath $part) "/" }}
         {{- end }}
         {{- errorf "%s: Icon '%s' in theme '%s' not found: path='%s' returned resource='%s'" $template $item $theme $path $file }}
